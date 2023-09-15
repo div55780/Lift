@@ -100,6 +100,9 @@ function updateT ()
     }
     if (App.Player.selectedAttacks[App.attackNo]) {
         App.Player.performAttack(App.Player.selectedAttacks[App.attackNo], App.Enemy);
+        if(App.Enemy.health <=0){
+            //ToDo: stop game
+        }
     }
     else {
         this.attackNo = 0;
@@ -117,20 +120,93 @@ function Fighter() {
     this.health = 100;
     this.attacksCount = 3;
     this.selectedAttacks = [];
+    this.state = {
+        buffs: [],
+        debuff: []
+    }
+
     this.performAttack = function(attack, target) {
+        var turnOfEffects = this.state.debuff.find(effect=>efffect.turnOf);
+        if(turnOfEffects && turnOfEffects.length>0){
+            turnOfEffects.forEach(effect => {
+                effect.OnEnd(this);
+            });
+        }
+        attack.onInit(this);
         console.log(attack.name);
         target.reactToAttack(attack);
     }
     
     this.reactToAttack = function(attack) {
-        this.health -= attack.baseDamage;
+        attack.effect(this);
+        var damageOffEffects = this.state.debuff.find(effect=>efffect.damageOff);
+        if(damageOffEffects && damageOffEffects.length>0){
+            damageOffEffects.forEach(effect => {
+                effect.OnEnd(this);
+            });
+        }else{
+            this.health -= attack.baseDamage;
+        }
     }
 }
 
-function Attack(name, baseDamage) {
+function Attack(name, baseDamage, effects) {
     this.name = name;
     this.baseDamage = baseDamage;
+    this.effects = effects;
 }
+
+var Effect = {
+    IncDamage:{
+        name:'IncDamage',
+        onInit:function(source,target){
+
+        },
+        onEnd:function(source,target){
+
+        }
+    },
+    СriticalDamage:{
+        name:'СriticalDamage',
+        onInit:function(source){
+
+        },
+        onEnd:function(source){
+
+        },
+        effect:function(target){
+
+        }
+    },
+    Dodge:{
+        name: 'Dodge',
+        damageOff : true,
+        onInit:function(source){
+            source.state.buffs.add(Effect.Dodge);
+        },
+        onEnd:function(source){
+            source.state.buffs.remove(Effect.Dodge);
+        },
+        effect:function(target){
+            
+        }
+    },
+    Stun:{
+        name:'Stun',
+        turnOf : true,
+        onInit:function(source){
+            
+        },
+        onEnd:function(source){
+            source.state.debuff.remove(Effect.Stun);
+        },
+        effect:function(target){
+            target.state.debuff.add(Effect.Stun);
+        }
+    }   
+}
+
+
 </script>
 
 </body>
