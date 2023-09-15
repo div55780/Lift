@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.15.1/dist/phaser-arcade-physics.min.js"></script>
+</head>
+<body>
+
+    <script>
+   var config = {
+    type: Phaser.AUTO,
+    width: 1024,
+    height: 1024,
+    scene: {
+        preload: preload,
+        create: create,
+        update: dumb
+    },
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 1000 },
+            debug: true
+        }
+    },
+};
+
+var game = new Phaser.Game(config);
+var App = {
+    Player: null,
+    Enemy: null,
+    attackNo: 0,
+}
+function preload ()
+{
+    this.load.image('background', 'assets/img/bg2.png');
+    this.load.spritesheet('babka_idle', 'assets/img/Spritesheets/Babka/Babka_Idle3.png', {
+        frameWidth: 331,
+        frameHeight: 800,
+    });
+    this.load.spritesheet('ded_idle', 'assets/img/Spritesheets/Ded/Ded_Idle.png', {
+        frameWidth: 291,
+        frameHeight: 803,
+    });
+}
+function dumb() {
+
+}
+function create ()
+{
+    this.add.image(512,512,'background');
+
+    let babka = this.physics.add.sprite(1024,0, 'babka_idle');
+    babka.setBounce(0.2);
+    babka.setCollideWorldBounds(true);
+
+    let ded = this.physics.add.sprite(0,0, 'ded_idle');
+    ded.setBounce(0.2);
+    ded.setCollideWorldBounds(true);
+
+    this.anims.create({
+        key: 'babka_idle',
+        frames: this.anims.generateFrameNumbers('babka_idle', {start: 0}),
+        frameRate: 5,
+        repeat: -1
+    }),
+    
+
+    this.anims.create({
+        key: 'ded_idle',
+        frames: this.anims.generateFrameNumbers('ded_idle', {start: 0}),
+        frameRate: 5,
+        repeat: -1
+    }),
+
+    babka.anims.play('babka_idle', true);
+    ded.anims.play('ded_idle', true);
+
+    App.Player = new Fighter();
+    App.Player.selectedAttacks = [
+        new Attack("Ded attack 1", 1),
+        new Attack("Ded attack 2", 2),
+        new Attack("Ded attack 3", 3),
+    ]
+    
+    App.Enemy = new Fighter();
+    App.Enemy.selectedAttacks = [
+        new Attack("Babka attack 1"),
+        new Attack("Babka attack 2"),
+        new Attack("Babka attack 3"),
+    ]
+
+    this.timedEvent = this.time.addEvent({ delay: 1000, callback: updateT, callbackScope: this, repeat: 9 });
+}
+
+function updateT ()
+{
+    if (App.Enemy.health <= 0 || App.Player.health <= 0) {
+        console.log("game over");
+        this.scene.stop();
+    }
+    if (App.Player.selectedAttacks[App.attackNo]) {
+        App.Player.performAttack(App.Player.selectedAttacks[App.attackNo], App.Enemy);
+    }
+    else {
+        this.attackNo = 0;
+    }
+    if (App.Enemy.selectedAttacks[App.attackNo]) {
+        App.Enemy.performAttack(App.Enemy.selectedAttacks[App.attackNo], App.Player);
+    }
+    else {
+        this.attackNo = 0;
+    }
+    App.attackNo += 1;
+}
+
+function Fighter() {
+    this.health = 100;
+    this.attacksCount = 3;
+    this.selectedAttacks = [];
+    this.performAttack = function(attack, target) {
+        console.log(attack.name);
+        target.reactToAttack(attack);
+    }
+    
+    this.reactToAttack = function(attack) {
+        this.health -= attack.baseDamage;
+    }
+}
+
+function Attack(name, baseDamage) {
+    this.name = name;
+    this.baseDamage = baseDamage;
+}
+</script>
+
+</body>
+</html>
